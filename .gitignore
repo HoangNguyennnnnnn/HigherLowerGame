@@ -1,0 +1,51 @@
+# 1. Logs (File nhật ký lỗi, không cần đẩy lên)
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# 2. Dependencies (QUAN TRỌNG: Thư viện nặng, tuyệt đối chặn)
+node_modules
+.pnp
+.pnp.js
+
+# 3. Build Output (File code đã đóng gói, không đẩy lên git)
+dist
+dist-ssr
+build
+
+# 4. OS Files (File rác của hệ điều hành)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# 5. Environment Variables (BẢO MẬT: Chứa key bí mật, tuyệt đối chặn)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Ngoại lệ: Cho phép file ví dụ này để team biết cần điền biến gì
+!.env.example
+
+# 6. IDE / Editor Config (Cấu hình riêng của máy mỗi người)
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs
+*.njsproj
+*.sln
+*.sw?
+
+# 7. Testing & Vite
+coverage
+*.tsbuildinfo
