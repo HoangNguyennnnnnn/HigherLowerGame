@@ -4,10 +4,57 @@
   box-sizing: border-box;
 }
 
+.start-screen-bg {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Tham chiếu trực tiếp đến file trong public */
+  background-image: url(/background.jpg); 
+  background-size: cover; 
+  background-position: center;
+}
+
+.start-content {
+  text-align: center;
+  padding: 40px;
+  background: rgba(0, 0, 0, 0.5); /* Nền mờ cho chữ dễ đọc */
+  border-radius: 15px;
+  width: 100vw;
+  height: 100vh;
+}
+
+.game-logo {
+  width: 100%;
+  max-width: 500px; /* Điều chỉnh kích thước logo */
+  height: auto;
+  margin-top: 50px;
+  margin-bottom: 20px;
+}
+
+.rule-explanation {
+  font-size: 1.2rem;
+  margin-bottom: 30px;
+  color: #ccc;
+}
+
+.start-button {
+  padding: 15px 40px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 50px;
+  background: #4ade80; /* Màu xanh lá cây nổi bật */
+  color: #333;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.start-button:hover {
+    transform: translateY(-2px);
+}
+
 .app {
   min-height: 100vh;
-  padding: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   font-family: system-ui, -apple-system, sans-serif;
 }

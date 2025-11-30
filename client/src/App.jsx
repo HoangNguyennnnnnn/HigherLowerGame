@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
+import logo from './assets/logo.png' 
 
 const SERVER_URL = 'http://172.20.127.157:8080'
 
@@ -44,7 +45,6 @@ function App() {
         try {
           const data = JSON.parse(event.data)
           
-          // Store session ID from initial connection
           if (data.session_id && !currentSessionId) {
             currentSessionId = data.session_id
             console.log('🔑 Session ID:', currentSessionId)
@@ -62,15 +62,9 @@ function App() {
 
       eventSource.onerror = (error) => {
         console.error('❌ SSE Error:', error)
-        console.log('ReadyState:', eventSource.readyState)
-        
         if (mounted) {
-          // 0 = connecting, 1 = open, 2 = closed
           if (eventSource.readyState === EventSource.CLOSED) {
-            console.log('SSE Connection closed')
             setConnected(false)
-          } else if (eventSource.readyState === EventSource.CONNECTING) {
-            console.log('SSE Reconnecting...')
           }
         }
       }
@@ -85,7 +79,7 @@ function App() {
         eventSource.close()
       }
     }
-  }, [])
+  }, []) // useEffect KHÔNG return JSX
 
   // Start new game
   const startGame = async () => {
@@ -134,67 +128,101 @@ function App() {
     setLoading(false)
   }
 
-  return (
-    <div className="app">
-      <div className="header">
-        <h1>🎮 Higher Lower Game</h1>
-        <div className="status">
-          <span className={connected ? 'connected' : 'disconnected'}>
-            {connected ? '🟢 SSE Connected' : '🔴 SSE Disconnected'}
-          </span>
-        </div>
-      </div>
+  // ------------------------------------------------------------------
+  // RENDER LOGIC: Hiện Start Screen hay Game Screen?
+  // ------------------------------------------------------------------
 
-      <div className="stats">
-        <div className="stat">
-          <span className="stat-label">Score:</span>
-          <span className="stat-value">{gameState.score}</span>
-        </div>
-        <div className="stat">
-          <span className="stat-label">Streak:</span>
-          <span className="stat-value">{gameState.streak}</span>
-        </div>
-      </div>
-
-      <div className="message">{gameState.message}</div>
-
-      <div className="game-area">
-        {gameState.labelA && gameState.labelB ? (
-          <>
-            <div className="item" onClick={() => !loading && makeChoice(1)}>
-              <img src={gameState.imageA} alt={gameState.labelA} />
-              <h2>{gameState.labelA}</h2>
-              <p className="value">${gameState.valueA.toLocaleString()}</p>
-              <button disabled={loading}>
-                Choose Higher
-              </button>
+  const renderGameContent = () => {
+    // Nếu chưa có labelA (hoặc là màn hình khởi động) -> HIỂN THỊ START SCREEN
+    if (!gameState.labelA) {
+      return (
+        // Áp dụng class background và style căn giữa
+        <div className="app start-screen-bg"> 
+          <div className="start-content">
+            {/* DÙNG LOGO ĐÃ IMPORT */}
+            <img src={logo} alt="Higher Lower Game Logo" className="game-logo" />
+            
+            <p className="rule-explanation">
+              Bạn nghĩ chủ đề nào trong hai chủ đề sau đây có lượt tìm kiếm hàng tháng "CAO HƠN"?
+            </p>
+            
+            <button 
+              className="start-button" 
+              onClick={startGame}
+              disabled={!connected || loading}
+            >
+              {loading ? 'Đang tải...' : 'CHƠI NGAY'}
+            </button>
+            
+            <div className="connection-status">
+              Trạng thái: {connected ? '🟢 Đã kết nối' : '🔴 Chờ kết nối...'}
             </div>
+          </div>
+        </div>
+      )
+    }
 
-            <div className="vs">VS</div>
+    // Nếu đã có labelA và labelB -> HIỂN THỊ GAME SCREEN
+    return (
+      <div className="app">
+        {/* Header/Status Bar */}
+        <div className="header">
+          <h1>🎮 Higher Lower Game</h1>
+          <div className="status">
+            <span className={connected ? 'connected' : 'disconnected'}>
+              {connected ? '🟢 SSE Connected' : '🔴 SSE Disconnected'}
+            </span>
+          </div>
+        </div>
 
-            <div className="item" onClick={() => !loading && makeChoice(2)}>
-              <img src={gameState.imageB} alt={gameState.labelB} />
-              <h2>{gameState.labelB}</h2>
-              <p className="value">${gameState.valueB.toLocaleString()}</p>
-              <button disabled={loading}>
-                Choose Higher
-              </button>
-            </div>
-          </>
-        ) : (
-          <button className="start-btn" onClick={startGame} disabled={loading}>
-            {loading ? 'Loading...' : 'Start Game'}
+        <div className="stats">
+          <div className="stat">
+            <span className="stat-label">Score:</span>
+            <span className="stat-value">{gameState.score}</span>
+          </div>
+          <div className="stat">
+            <span className="stat-label">Streak:</span>
+            <span className="stat-value">{gameState.streak}</span>
+          </div>
+        </div>
+
+        <div className="message">{gameState.message}</div>
+
+        <div className="game-area">
+          {/* Item A */}
+          <div className="item" onClick={() => !loading && makeChoice(1)}>
+            <img src={gameState.imageA} alt={gameState.labelA} />
+            <h2>{gameState.labelA}</h2>
+            <p className="value">${gameState.valueA.toLocaleString()}</p>
+            <button disabled={loading}>
+              Chọn A Lớn Hơn
+            </button>
+          </div>
+
+          <div className="vs">VS</div>
+
+          {/* Item B */}
+          <div className="item" onClick={() => !loading && makeChoice(2)}>
+            <img src={gameState.imageB} alt={gameState.labelB} />
+            <h2>{gameState.labelB}</h2>
+            <p className="value">CAO HƠN hay THẤP HƠN?</p> {/* Sửa lại để ẩn giá trị B */}
+            <button disabled={loading}>
+              Chọn B Lớn Hơn
+            </button>
+          </div>
+        </div>
+
+        {gameState.labelA && (
+          <button className="new-game-btn" onClick={startGame} disabled={loading}>
+            New Game
           </button>
         )}
       </div>
+    )
+  }
 
-      {gameState.labelA && (
-        <button className="new-game-btn" onClick={startGame} disabled={loading}>
-          New Game
-        </button>
-      )}
-    </div>
-  )
+  // 4. MAIN RETURN CALL
+  return renderGameContent();
 }
 
 export default App
