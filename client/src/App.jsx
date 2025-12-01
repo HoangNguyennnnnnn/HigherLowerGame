@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import './App.css'
-import logo from './assets/logo.png' 
+import logo from './assets/logo.png'
+import GameScreen from './components/GameScreen'
 
-const SERVER_URL = 'http://172.20.127.157:8080'
+const SERVER_URL = 'http://172.24.18.63:8080'
 
 function App() {
   const [gameState, setGameState] = useState({
@@ -79,9 +80,9 @@ function App() {
         eventSource.close()
       }
     }
-  }, []) // useEffect KHÔNG return JSX
+  }, [])
 
-  // Start new game
+  // Start new game (Gửi POST /game)
   const startGame = async () => {
     if (!sessionId) {
       alert('Not connected to server yet. Please wait...')
@@ -103,7 +104,7 @@ function App() {
     setLoading(false)
   }
 
-  // Send player choice
+  // Send player choice (Gửi POST /game/choice)
   const makeChoice = async (choice) => {
     if (!sessionId) {
       alert('Not connected to server yet. Please wait...')
@@ -113,7 +114,7 @@ function App() {
     setLoading(true)
     try {
       const response = await axios.post(`${SERVER_URL}/game/choice`, 
-        { choice },
+        { choice }, // Gửi 1 (Chọn A) hoặc 2 (Chọn B)
         {
           headers: {
             'X-Session-ID': sessionId
@@ -133,17 +134,15 @@ function App() {
   // ------------------------------------------------------------------
 
   const renderGameContent = () => {
-    // Nếu chưa có labelA (hoặc là màn hình khởi động) -> HIỂN THỊ START SCREEN
+    // 1. HIỂN THỊ START SCREEN
     if (!gameState.labelA) {
       return (
-        // Áp dụng class background và style căn giữa
-        <div className="app start-screen-bg"> 
+        <div className="start-screen-bg"> 
           <div className="start-content">
-            {/* DÙNG LOGO ĐÃ IMPORT */}
             <img src={logo} alt="Higher Lower Game Logo" className="game-logo" />
             
             <p className="rule-explanation">
-              Bạn nghĩ chủ đề nào trong hai chủ đề sau đây có lượt tìm kiếm hàng tháng "CAO HƠN"?
+              Which of the two topics below do you think has a higher monthly search volume?
             </p>
             
             <button 
@@ -162,66 +161,18 @@ function App() {
       )
     }
 
-    // Nếu đã có labelA và labelB -> HIỂN THỊ GAME SCREEN
+    // 2. HIỂN THỊ GAME SCREEN (Sử dụng Component mới)
     return (
-      <div className="app">
-        {/* Header/Status Bar */}
-        <div className="header">
-          <h1>🎮 Higher Lower Game</h1>
-          <div className="status">
-            <span className={connected ? 'connected' : 'disconnected'}>
-              {connected ? '🟢 SSE Connected' : '🔴 SSE Disconnected'}
-            </span>
-          </div>
-        </div>
-
-        <div className="stats">
-          <div className="stat">
-            <span className="stat-label">Score:</span>
-            <span className="stat-value">{gameState.score}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Streak:</span>
-            <span className="stat-value">{gameState.streak}</span>
-          </div>
-        </div>
-
-        <div className="message">{gameState.message}</div>
-
-        <div className="game-area">
-          {/* Item A */}
-          <div className="item" onClick={() => !loading && makeChoice(1)}>
-            <img src={gameState.imageA} alt={gameState.labelA} />
-            <h2>{gameState.labelA}</h2>
-            <p className="value">${gameState.valueA.toLocaleString()}</p>
-            <button disabled={loading}>
-              Chọn A Lớn Hơn
-            </button>
-          </div>
-
-          <div className="vs">VS</div>
-
-          {/* Item B */}
-          <div className="item" onClick={() => !loading && makeChoice(2)}>
-            <img src={gameState.imageB} alt={gameState.labelB} />
-            <h2>{gameState.labelB}</h2>
-            <p className="value">CAO HƠN hay THẤP HƠN?</p> {/* Sửa lại để ẩn giá trị B */}
-            <button disabled={loading}>
-              Chọn B Lớn Hơn
-            </button>
-          </div>
-        </div>
-
-        {gameState.labelA && (
-          <button className="new-game-btn" onClick={startGame} disabled={loading}>
-            New Game
-          </button>
-        )}
-      </div>
+      <GameScreen 
+        gameState={gameState} 
+        connected={connected} 
+        loading={loading} 
+        makeChoice={makeChoice} 
+        startGame={startGame}
+      />
     )
   }
 
-  // 4. MAIN RETURN CALL
   return renderGameContent();
 }
 

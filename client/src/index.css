@@ -1,11 +1,19 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
+
 html, body {
-    height: 100%; /* Bắt buộc thẻ body và html phải chiếm 100% chiều cao */
+    height: 100%; 
     margin: 0;
     padding: 0;
+    overflow: hidden; 
+}
+
+#root {
+  height: 100%; /* Thẻ DIV root phải chiếm hết chiều cao */
+  width: 100%;
 }
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: 'Quicksand', sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -18,12 +26,6 @@ html, body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
-#root {
-  height: 100%;
-  width: 100%;
-}
-
 
 a {
   font-weight: 500;
