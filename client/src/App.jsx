@@ -1,71 +1,137 @@
-import { useState, useEffect } from 'react'
-import axios from 'axios'
-import './App.css'
-import logo from './assets/logo.png' 
+/**
+ * App Component - Main application entry point
+ */
 
-const SERVER_URL = 'http://172.20.127.157:8080'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import './App.css'
+
+// Constants
+import { SCREENS, SERVER_URL, ENDPOINTS } from './constants'
+
+// Hooks
+import { useRoom, useGame } from './hooks'
+
+// Components
+import { NameInput, Lobby, WaitingRoom, GameScreen, GameOver } from './components'
 
 function App() {
-  const [gameState, setGameState] = useState({
-    score: 0,
-    streak: 0,
-    labelA: '',
-    valueA: 0,
-    imageA: '',
-    labelB: '',
-    valueB: 0,
-    imageB: '',
-    message: 'Click "Start Game" to begin'
-  })
+  // Player state
+  const [playerName, setPlayerName] = useState('')
+  const [isNameSet, setIsNameSet] = useState(false)
+  
+  // Screen state
+  const [currentScreen, setCurrentScreen] = useState(SCREENS.LOBBY)
+  
+  // SSE state
   const [connected, setConnected] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState(null)
+
+  // Custom hooks
+  const room = useRoom(sessionId)
+  const game = useGame(sessionId)
+  
+  // Ref to access latest room.updateRoom
+  const roomRef = useRef(room)
+  useEffect(() => {
+    roomRef.current = room
+  }, [room])
 
   // SSE Connection
   useEffect(() => {
     let eventSource = null
     let mounted = true
-    let currentSessionId = null
 
     const setupSSE = () => {
-      console.log('Setting up SSE connection to:', `${SERVER_URL}/subscribe`)
-      eventSource = new EventSource(`${SERVER_URL}/subscribe`)
+      const sseUrl = `${SERVER_URL}${ENDPOINTS.SUBSCRIBE}`
+      eventSource = new EventSource(sseUrl)
 
       eventSource.onopen = () => {
-        console.log('✅ SSE Connected successfully')
         if (mounted) {
           setConnected(true)
         }
       }
 
       eventSource.onmessage = (event) => {
-        console.log('📩 SSE Received:', event.data)
         if (!mounted) return
-        
+
         try {
           const data = JSON.parse(event.data)
-          
-          if (data.session_id && !currentSessionId) {
-            currentSessionId = data.session_id
-            console.log('🔑 Session ID:', currentSessionId)
-            setSessionId(currentSessionId)
+
+          // Handle session ID
+          if (data.session_id) {
+            setSessionId(data.session_id)
+            localStorage.setItem('sessionId', data.session_id)
           }
-          
-          if (data.action === 'update_game') {
-            console.log('🎮 Game state updated:', data)
-            setGameState(data)
+
+          // Handle room events
+          if (data.action === 'player_joined' || data.action === 'player_left') {
+            roomRef.current.updateRoom(data.room)
           }
-        } catch (error) {
-          console.log('ℹ️ SSE message (not JSON):', event.data)
+
+          // Handle game start
+          if (data.action === 'game_started') {
+            roomRef.current.updateRoom(data.room)
+            // Update game state with initial question and reset state
+            if (data.labelA) {
+              game.updateGameData({
+                labelA: data.labelA,
+                valueA: data.valueA,
+                labelB: data.labelB,
+                round: data.round,
+                hasAnswered: false,
+                gameOver: false,
+                score: 0,
+                streak: 0,
+                message: ''
+              })
+            }
+            setCurrentScreen(SCREENS.PLAYING)
+          }
+
+          // Handle player answered - KHÔNG CÒN dùng nữa (server không gửi)
+          if (data.action === 'player_answered') {
+            // Không làm gì - mỗi player chỉ biết kết quả của mình
+          }
+
+          // Handle round results (khi TẤT CẢ đã trả lời)
+          if (data.action === 'round_results') {
+            game.updateGameData({
+              roundResults: data.results
+            })
+          }
+
+          // Handle new round
+          if (data.action === 'new_round') {
+            roomRef.current.updateRoom(data.room)
+            game.updateGameData({
+              labelA: data.labelA,
+              valueA: data.valueA,
+              labelB: data.labelB,
+              round: data.round,
+              hasAnswered: false,
+              message: '',
+              roundResults: null  // Reset round results
+            })
+          }
+
+          // Handle player update during game
+          if (data.action === 'player_update') {
+            roomRef.current.updateRoom(data.room)
+          }
+
+          // Handle game finished
+          if (data.action === 'game_finished') {
+            roomRef.current.updateRoom(data.room)
+            setCurrentScreen(SCREENS.GAME_OVER)
+          }
+        } catch {
+          // Non-JSON message, ignore
         }
       }
 
-      eventSource.onerror = (error) => {
-        console.error('❌ SSE Error:', error)
-        if (mounted) {
-          if (eventSource.readyState === EventSource.CLOSED) {
-            setConnected(false)
-          }
+      eventSource.onerror = () => {
+        if (mounted && eventSource.readyState === EventSource.CLOSED) {
+          setConnected(false)
         }
       }
     }
@@ -73,156 +139,179 @@ function App() {
     setupSSE()
 
     return () => {
-      console.log('Cleanup: Closing SSE connection')
       mounted = false
       if (eventSource) {
         eventSource.close()
       }
     }
-  }, []) // useEffect KHÔNG return JSX
+  }, [])
 
-  // Start new game
-  const startGame = async () => {
-    if (!sessionId) {
-      alert('Not connected to server yet. Please wait...')
-      return
+  // Fetch rooms only once when entering lobby
+  useEffect(() => {
+    if (connected && currentScreen === SCREENS.LOBBY) {
+      room.fetchRooms()
     }
-    
-    setLoading(true)
-    try {
-      const response = await axios.post(`${SERVER_URL}/game`, {}, {
-        headers: {
-          'X-Session-ID': sessionId
-        }
-      })
-      setGameState(response.data)
-    } catch (error) {
-      console.error('Error starting game:', error)
-      alert('Failed to start game. Is the server running?')
+  }, [connected, currentScreen])
+
+  // Fetch game state when entering game
+  useEffect(() => {
+    if (currentScreen === SCREENS.PLAYING && sessionId) {
+      game.fetchGameState()
     }
-    setLoading(false)
+  }, [currentScreen, sessionId, game.fetchGameState])
+
+  // ==================== HANDLERS ====================
+
+  // Set player name
+  const handleSetName = () => {
+    if (playerName.trim()) {
+      setIsNameSet(true)
+    }
   }
 
-  // Send player choice
-  const makeChoice = async (choice) => {
-    if (!sessionId) {
-      alert('Not connected to server yet. Please wait...')
-      return
+  // Create room
+  const handleCreateRoom = async ({ roomName, maxPlayers, maxRounds }) => {
+    if (!playerName.trim()) {
+      alert('Vui lòng nhập tên trước!')
+      return false
     }
-    
-    setLoading(true)
-    try {
-      const response = await axios.post(`${SERVER_URL}/game/choice`, 
-        { choice },
-        {
-          headers: {
-            'X-Session-ID': sessionId
-          }
-        }
-      )
-      setGameState(response.data)
-    } catch (error) {
-      console.error('Error making choice:', error)
-      alert('Failed to submit choice')
+
+    const result = await room.createRoom({
+      roomName,
+      playerName,
+      maxPlayers,
+      maxRounds
+    })
+
+    if (result) {
+      setCurrentScreen(SCREENS.WAITING_ROOM)
+      return true
+    } else if (room.error) {
+      alert(room.error)
     }
-    setLoading(false)
+    return false
   }
 
-  // ------------------------------------------------------------------
-  // RENDER LOGIC: Hiện Start Screen hay Game Screen?
-  // ------------------------------------------------------------------
-
-  const renderGameContent = () => {
-    // Nếu chưa có labelA (hoặc là màn hình khởi động) -> HIỂN THỊ START SCREEN
-    if (!gameState.labelA) {
-      return (
-        // Áp dụng class background và style căn giữa
-        <div className="app start-screen-bg"> 
-          <div className="start-content">
-            {/* DÙNG LOGO ĐÃ IMPORT */}
-            <img src={logo} alt="Higher Lower Game Logo" className="game-logo" />
-            
-            <p className="rule-explanation">
-              Bạn nghĩ chủ đề nào trong hai chủ đề sau đây có lượt tìm kiếm hàng tháng "CAO HƠN"?
-            </p>
-            
-            <button 
-              className="start-button" 
-              onClick={startGame}
-              disabled={!connected || loading}
-            >
-              {loading ? 'Đang tải...' : 'CHƠI NGAY'}
-            </button>
-            
-            <div className="connection-status">
-              Trạng thái: {connected ? '🟢 Đã kết nối' : '🔴 Chờ kết nối...'}
-            </div>
-          </div>
-        </div>
-      )
+  // Join room
+  const handleJoinRoom = async (roomId) => {
+    if (!playerName.trim()) {
+      alert('Vui lòng nhập tên trước!')
+      return
     }
 
-    // Nếu đã có labelA và labelB -> HIỂN THỊ GAME SCREEN
+    const result = await room.joinRoom({
+      roomId,
+      playerName
+    })
+
+    if (result) {
+      setCurrentScreen(SCREENS.WAITING_ROOM)
+    } else if (room.error) {
+      alert(room.error)
+    }
+  }
+
+  // Leave room
+  const handleLeaveRoom = async () => {
+    const success = await room.leaveRoom()
+    if (success) {
+      setCurrentScreen(SCREENS.LOBBY)
+      room.fetchRooms()
+    }
+  }
+
+  // Start game
+  const handleStartGame = async () => {
+    const result = await room.startGame()
+    if (result) {
+      setCurrentScreen(SCREENS.PLAYING)
+    } else if (room.error) {
+      alert(room.error)
+    }
+  }
+
+  // Make choice with response time
+  const handleChoice = async (choice, responseTime = 0) => {
+    await game.makeChoice(choice, responseTime)
+  }
+
+  // Return to lobby
+  const handleReturnToLobby = async () => {
+    await handleLeaveRoom()
+    game.resetGame()
+  }
+
+  // ==================== RENDER ====================
+
+  if (!isNameSet) {
     return (
-      <div className="app">
-        {/* Header/Status Bar */}
-        <div className="header">
-          <h1>🎮 Higher Lower Game</h1>
-          <div className="status">
-            <span className={connected ? 'connected' : 'disconnected'}>
-              {connected ? '🟢 SSE Connected' : '🔴 SSE Disconnected'}
-            </span>
-          </div>
-        </div>
-
-        <div className="stats">
-          <div className="stat">
-            <span className="stat-label">Score:</span>
-            <span className="stat-value">{gameState.score}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-label">Streak:</span>
-            <span className="stat-value">{gameState.streak}</span>
-          </div>
-        </div>
-
-        <div className="message">{gameState.message}</div>
-
-        <div className="game-area">
-          {/* Item A */}
-          <div className="item" onClick={() => !loading && makeChoice(1)}>
-            <img src={gameState.imageA} alt={gameState.labelA} />
-            <h2>{gameState.labelA}</h2>
-            <p className="value">${gameState.valueA.toLocaleString()}</p>
-            <button disabled={loading}>
-              Chọn A Lớn Hơn
-            </button>
-          </div>
-
-          <div className="vs">VS</div>
-
-          {/* Item B */}
-          <div className="item" onClick={() => !loading && makeChoice(2)}>
-            <img src={gameState.imageB} alt={gameState.labelB} />
-            <h2>{gameState.labelB}</h2>
-            <p className="value">CAO HƠN hay THẤP HƠN?</p> {/* Sửa lại để ẩn giá trị B */}
-            <button disabled={loading}>
-              Chọn B Lớn Hơn
-            </button>
-          </div>
-        </div>
-
-        {gameState.labelA && (
-          <button className="new-game-btn" onClick={startGame} disabled={loading}>
-            New Game
-          </button>
-        )}
-      </div>
+      <NameInput
+        playerName={playerName}
+        setPlayerName={setPlayerName}
+        onSubmit={handleSetName}
+        connected={connected}
+      />
     )
   }
 
-  // 4. MAIN RETURN CALL
-  return renderGameContent();
+  switch (currentScreen) {
+    case SCREENS.LOBBY:
+      return (
+        <Lobby
+          playerName={playerName}
+          rooms={room.rooms}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
+          onRefresh={room.fetchRooms}
+          loading={room.loading}
+          connected={connected}
+        />
+      )
+
+    case SCREENS.WAITING_ROOM:
+      return (
+        <WaitingRoom
+          room={room.currentRoom}
+          sessionId={sessionId}
+          onStartGame={handleStartGame}
+          onLeaveRoom={handleLeaveRoom}
+          loading={room.loading}
+        />
+      )
+
+    case SCREENS.PLAYING:
+      return (
+        <GameScreen
+          room={room.currentRoom}
+          sessionId={sessionId}
+          gameState={game}
+          onChoice={handleChoice}
+          loading={game.loading}
+        />
+      )
+
+    case SCREENS.GAME_OVER:
+      return (
+        <GameOver
+          room={room.currentRoom}
+          sessionId={sessionId}
+          onReturnToLobby={handleReturnToLobby}
+        />
+      )
+
+    default:
+      return (
+        <Lobby
+          playerName={playerName}
+          rooms={room.rooms}
+          onCreateRoom={handleCreateRoom}
+          onJoinRoom={handleJoinRoom}
+          onRefresh={room.fetchRooms}
+          loading={room.loading}
+          connected={connected}
+        />
+      )
+  }
 }
 
 export default App

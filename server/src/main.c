@@ -16,6 +16,9 @@ PlayerGameState player_states[MAX_CLIENTS];
 pthread_mutex_t game_state_mutex = PTHREAD_MUTEX_INITIALIZER;
 int next_session_id = 1;
 
+// Forward declaration for room cleanup
+void cleanup_player_from_rooms(int session_id);
+
 // Handle SSE subscription
 void handle_sse_subscribe(int client_sock) {
     // Send SSE headers
@@ -45,6 +48,8 @@ void handle_sse_subscribe(int client_sock) {
             sse_clients[i].socket = client_sock;
             sse_clients[i].active = 1;
             sse_clients[i].session_id = session_id;
+            sse_clients[i].room_id = -1;  // Not in any room
+            sse_clients[i].player_name[0] = '\0';  // No name yet
             added = 1;
             active_count++;
             printf("\n[SSE] ✅ New client connected\n");
@@ -132,7 +137,7 @@ void *handle_client(void *arg) {
         return NULL;
     }
     
-    // Handle POST /game/choice (Player choice)
+    // Handle POST /game/choice (Player choice - single player mode)
     if (strcmp(method, "POST") == 0 && strcmp(path, "/game/choice") == 0) {
         // Extract JSON body from request
         char *body_start = strstr(buffer, "\r\n\r\n");
@@ -147,6 +152,73 @@ void *handle_client(void *arg) {
         close(client_sock);
         return NULL;
     }
+    
+    // ==================== ROOM ENDPOINTS ====================
+    
+    // Handle GET /rooms (List all rooms)
+    if (strcmp(method, "GET") == 0 && strcmp(path, "/rooms") == 0) {
+        handle_list_rooms(client_sock);
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle POST /rooms/create (Create a new room)
+    if (strcmp(method, "POST") == 0 && strcmp(path, "/rooms/create") == 0) {
+        char *body_start = strstr(buffer, "\r\n\r\n");
+        int session_id = get_session_from_request(buffer);
+        handle_create_room(client_sock, session_id, body_start ? body_start + 4 : "");
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle POST /rooms/join (Join an existing room)
+    if (strcmp(method, "POST") == 0 && strcmp(path, "/rooms/join") == 0) {
+        char *body_start = strstr(buffer, "\r\n\r\n");
+        int session_id = get_session_from_request(buffer);
+        handle_join_room(client_sock, session_id, body_start ? body_start + 4 : "");
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle POST /rooms/leave (Leave current room)
+    if (strcmp(method, "POST") == 0 && strcmp(path, "/rooms/leave") == 0) {
+        int session_id = get_session_from_request(buffer);
+        handle_leave_room(client_sock, session_id);
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle POST /rooms/start (Start game - host only)
+    if (strcmp(method, "POST") == 0 && strcmp(path, "/rooms/start") == 0) {
+        int session_id = get_session_from_request(buffer);
+        handle_start_game(client_sock, session_id);
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle POST /rooms/choice (Player choice in room game)
+    if (strcmp(method, "POST") == 0 && strcmp(path, "/rooms/choice") == 0) {
+        char *body_start = strstr(buffer, "\r\n\r\n");
+        int session_id = get_session_from_request(buffer);
+        if (body_start) {
+            handle_room_choice(client_sock, session_id, body_start + 4);
+        } else {
+            char error_json[] = "{\"error\":\"No body found\"}";
+            send_json_response(client_sock, error_json);
+        }
+        close(client_sock);
+        return NULL;
+    }
+    
+    // Handle GET /rooms/info (Get current room info)
+    if (strcmp(method, "GET") == 0 && strcmp(path, "/rooms/info") == 0) {
+        int session_id = get_session_from_request(buffer);
+        handle_get_room_info(client_sock, session_id);
+        close(client_sock);
+        return NULL;
+    }
+    
+    // ==================== END ROOM ENDPOINTS ====================
     
     // Handle unknown routes
     char not_found[256];
@@ -175,9 +247,14 @@ int main() {
     // Initialize game database
     init_game_database();
     
+    // Initialize rooms
+    init_rooms();
+    
     // Initialize SSE clients and player states arrays
     for (int i = 0; i < MAX_CLIENTS; i++) {
         sse_clients[i].active = 0;
+        sse_clients[i].room_id = -1;
+        sse_clients[i].player_name[0] = '\0';
         player_states[i].active = 0;
     }
     
@@ -221,12 +298,12 @@ int main() {
     printf("╠═══════════════════════════════════════════╣\n");
     printf("║  Server URL: http://localhost:%d        ║\n", PORT);
     printf("║  WSL IP:     http://172.20.127.157:%d   ║\n", PORT);
-    printf("║  Max Clients: %d                         ║\n", MAX_CLIENTS);
+    printf("║  Max Clients: %-3d | Max Rooms: %-3d       ║\n", MAX_CLIENTS, MAX_ROOMS);
     printf("╠═══════════════════════════════════════════╣\n");
     printf("║  Features:                                ║\n");
     printf("║  • SSE (Server-Sent Events)               ║\n");
-    printf("║  • HTTP POST endpoints                    ║\n");
-    printf("║  • Multi-threaded connections             ║\n");
+    printf("║  • Room/Lobby system                      ║\n");
+    printf("║  • Multi-player support                   ║\n");
     printf("║  • CORS enabled                           ║\n");
     printf("╚═══════════════════════════════════════════╝\n");
     printf("\nWaiting for connections...\n\n");
