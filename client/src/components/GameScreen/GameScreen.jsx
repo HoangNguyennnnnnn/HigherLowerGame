@@ -88,7 +88,13 @@ function GameScreen({
 
       <div className="game-split-screen">
         {/* Left side - Item A (Known) */}
-        <div className="split-panel panel-a">
+        <div className="split-panel panel-a"
+          style={{ 
+              backgroundImage: `url(${gameState.labelA})`, 
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+          }}
+        >
           <div className="panel-content">
             <h2 className="item-name">{labelA}</h2>
             <p className="item-value">${valueA?.toLocaleString()}</p>
@@ -96,7 +102,13 @@ function GameScreen({
         </div>
 
         {/* Right side - Item B (Unknown) */}
-        <div className="split-panel panel-b">
+        <div className="split-panel panel-b"
+          style={{ 
+              backgroundImage: `url(${gameState.imageB})`, 
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+          }}
+        >
           <div className="panel-content">
             <h2 className="item-name">{labelB}</h2>
             

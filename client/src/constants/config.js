@@ -3,7 +3,7 @@
  */
 
 // Server URL - Change this based on environment
-export const SERVER_URL = 'http://172.20.127.157:8080'
+export const SERVER_URL = 'http://172.24.18.63:8080'
 
 // API Endpoints
 export const ENDPOINTS = {

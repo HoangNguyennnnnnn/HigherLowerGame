@@ -3,6 +3,7 @@
  */
 
 import PropTypes from 'prop-types'
+import gameLogo from '../../assets/logo.png'
 
 function NameInput({ playerName, setPlayerName, onSubmit, connected }) {
   const handleKeyPress = (e) => {
@@ -13,7 +14,7 @@ function NameInput({ playerName, setPlayerName, onSubmit, connected }) {
 
   return (
     <div className="name-input-screen">
-      <h1>🎮 Higher Lower Game</h1>
+      <img src={gameLogo} alt="Higher Lower Game Logo" className="game-logo" />
       <p>Nhập tên của bạn để bắt đầu</p>
       
       <input

@@ -30,36 +30,43 @@ function GameOver({ room, sessionId, onReturnToLobby }) {
 
   return (
     <div className="game-over-screen">
-      <h1>🏆 Kết Thúc Game!</h1>
+      
+      {/* Wrapper chính cho nội dung (để căn giữa) */}
+      <div className="game-over-content"> 
+        
+        <h1>Game Over!</h1>
 
-      <div className="winner-section">
-        <h2>👑 Người Chiến Thắng</h2>
-        <div className="winner-card">
-          <span className="winner-name">{winner?.name}</span>
-          <span className="winner-score">{winner?.score} điểm</span>
-        </div>
-      </div>
-
-      <div className="final-leaderboard">
-        <h2>📊 Bảng Xếp Hạng</h2>
-        {sortedPlayers.map((player, index) => (
-          <div 
-            key={player.session_id} 
-            className={`final-rank ${getRankClass(index)}`}
-          >
-            <span className="rank-badge">{getRankBadge(index)}</span>
-            <span className="player-name">{player.name}</span>
-            <span className="player-score">{player.score} điểm</span>
-            {player.session_id === sessionId && (
-              <span className="you-tag">(Bạn)</span>
-            )}
+        <div className="winner-section">
+          <h2>Winner</h2>
+          <div className="winner-card">
+            <span className="winner-name">{winner?.name || 'Chưa rõ'}</span>
+            <span className="winner-score">{winner?.score || 0} điểm</span>
           </div>
-        ))}
-      </div>
+        </div>
 
-      <button className="return-lobby-btn" onClick={onReturnToLobby}>
-        🏠 Về Sảnh Chờ
-      </button>
+        <div className="final-leaderboard">
+          <h2>Ranking</h2>
+          <div className="leaderboard"> {/* Thêm wrapper leaderboard để giới hạn max-width */}
+            {sortedPlayers.map((player, index) => (
+              <div 
+                key={player.session_id} 
+                className={`final-rank ${getRankClass(index)} ${player.session_id === sessionId ? 'is-me' : ''}`}
+              >
+                <span className="rank-badge">{getRankBadge(index)}</span>
+                <span className="player-name">{player.name}</span>
+                <span className="player-score">{player.score} scores</span>
+                {player.session_id === sessionId && (
+                    <span className="you-tag">(You)</span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <button className="return-lobby-btn" onClick={onReturnToLobby}>
+          Back to the Lobby
+        </button>
+      </div> {/* Kết thúc game-over-content */}
     </div>
   )
 }
