@@ -170,7 +170,7 @@ function App() {
   }
 
   // Create room
-  const handleCreateRoom = async ({ roomName, maxPlayers, maxRounds }) => {
+  const handleCreateRoom = async ({ roomName, maxRounds }) => {
     if (!playerName.trim()) {
       alert('Vui lòng nhập tên trước!')
       return false
@@ -179,7 +179,6 @@ function App() {
     const result = await room.createRoom({
       roomName,
       playerName,
-      maxPlayers,
       maxRounds
     })
 

@@ -14,18 +14,41 @@ server/
 │   ├── sse.h                  # Server-Sent Events
 │   ├── server.h               # Server core functions
 │   ├── room.h                 # Room/Lobby system
-│   └── game_logic.h           # Single player game logic
+│   ├── database.h             # Game database declarations
+│   └── room_helpers.h         # Room helper functions
 │
-├── src/                        # Source files
-│   ├── main.c                 # Entry point, routing, SSE handler
-│   ├── http_utils.c           # HTTP response implementations
-│   ├── game_logic.c           # Single player game implementations
-│   └── room_logic.c           # Room system implementations
+├── src/                        # Source files (modular)
+│   ├── main.c                 # Entry point, globals, server loop
+│   ├── router.c               # HTTP request parsing & routing
+│   ├── sse.c                  # SSE connection handling
+│   ├── http.c                 # HTTP response utilities
+│   ├── database.c             # Game database (items.txt loading)
+│   ├── room_init.c            # Room globals & initialization
+│   ├── room_helpers.c         # Room finder & JSON builders
+│   ├── room_handlers.c        # Room CRUD handlers
+│   └── game_handlers.c        # Game flow handlers
+│
+├── data/                       # Data files
+│   └── items.txt              # Game items (name, value, image_url)
 │
 ├── obj/                        # Object files (generated)
 ├── bin/                        # Executable (generated)
 └── Makefile                    # Build configuration
 ```
+
+## 🧩 Source Modules
+
+| File | Chức năng |
+|------|-----------|
+| `main.c` | Entry point, khởi tạo server, accept loop |
+| `router.c` | Parse HTTP requests, route đến handlers |
+| `sse.c` | SSE subscribe, broadcast to session/room |
+| `http.c` | send_cors_headers(), send_json_response() |
+| `database.c` | Load items.txt, get_random_index_except() |
+| `room_init.c` | Global vars (rooms, mutex) + init_rooms() |
+| `room_helpers.c` | find_room_*, JSON parse/build functions |
+| `room_handlers.c` | Room CRUD handlers (list, create, join, leave) |
+| `game_handlers.c` | Game flow handlers (start, choice, info) |
 
 ## 📋 Header Files
 
@@ -45,7 +68,6 @@ Chứa tất cả data structures:
 - `RoomPlayer` - Struct cho người chơi trong phòng
 - `GameRoom` - Struct cho phòng chơi
 - `SSE_Client` - Struct cho SSE connection
-- `PlayerGameState` - Struct cho game state (single player)
 
 ### `http.h`
 HTTP response utilities:
@@ -58,8 +80,15 @@ Server-Sent Events:
 - `broadcast_sse_to_session()` - Gửi message đến session
 - `broadcast_sse_to_room()` - Gửi message đến tất cả người trong phòng
 
+### `database.h`
+Game database:
+- `game_database[]` - Mảng chứa tất cả items
+- `item_count` - Số lượng items
+- `init_game_database()` - Khởi tạo database
+- `get_random_index_except()` - Lấy random index
+
 ### `room.h`
-Room/Lobby system:
+Room/Lobby system declarations:
 - `init_rooms()` - Khởi tạo hệ thống phòng
 - `handle_list_rooms()` - GET /rooms
 - `handle_create_room()` - POST /rooms/create
@@ -69,11 +98,13 @@ Room/Lobby system:
 - `handle_room_choice()` - POST /rooms/choice
 - `handle_get_room_info()` - GET /rooms/info
 
-### `game_logic.h`
-Single player game (legacy):
-- `init_game_database()` - Khởi tạo database
-- `handle_game_init()` - GET /game
-- `handle_player_choice()` - POST /game/choice
+### `room_helpers.h`
+Room helper functions:
+- `find_room_index()` - Tìm room theo ID
+- `find_player_in_room()` - Tìm player trong room
+- `find_room_with_player()` - Tìm room chứa player
+- `build_room_json()` - Build JSON cho room
+- `parse_json_string/int()` - Parse JSON primitives
 
 ### `game.h` (Master Header)
 Include tất cả các header khác, giữ backward compatibility.
@@ -111,12 +142,6 @@ POST /rooms/leave              # Rời phòng
 POST /rooms/start              # Bắt đầu game (chỉ host)
 POST /rooms/choice             # Chọn đáp án
 GET /rooms/info                # Thông tin phòng hiện tại
-```
-
-### Game APIs (Single Player - Legacy)
-```
-GET /game                      # Bắt đầu game mới
-POST /game/choice              # Chọn đáp án
 ```
 
 ## 📊 Luồng dữ liệu

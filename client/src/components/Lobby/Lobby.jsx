@@ -17,13 +17,11 @@ function Lobby({
   connected 
 }) {
   const [roomName, setRoomName] = useState('')
-  const [maxPlayers, setMaxPlayers] = useState(4)
   const [maxRounds, setMaxRounds] = useState(10)
 
   const handleCreateRoom = async () => {
     const success = await onCreateRoom({ 
       roomName: roomName || `Phòng của ${playerName}`, 
-      maxPlayers,
       maxRounds
     })
     if (success) {
@@ -41,8 +39,6 @@ function Lobby({
       <CreateRoomForm
         roomName={roomName}
         setRoomName={setRoomName}
-        maxPlayers={maxPlayers}
-        setMaxPlayers={setMaxPlayers}
         maxRounds={maxRounds}
         setMaxRounds={setMaxRounds}
         onCreate={handleCreateRoom}

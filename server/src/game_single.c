@@ -1,111 +1,43 @@
+/*
+ * ============================================================================
+ *                    HIGHER LOWER GAME - SINGLE PLAYER MODULE
+ * ============================================================================
+ * File: game_single.c
+ * Description: Single player game logic (Legacy mode)
+ * 
+ * Chức năng:
+ *   1. Khởi tạo game single player
+ *   2. Xử lý lựa chọn của người chơi
+ * 
+ * Note: Đây là mode cũ, chủ yếu dùng cho testing.
+ *       Mode chính là multiplayer rooms.
+ * ============================================================================
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <pthread.h>
 #include "../include/game.h"
 
-// Game database - loaded from file
-GameItem game_database[MAX_ITEMS];
-int item_count = 0;  // Actual number of items loaded
+/* ============================================================================
+ *                           EXTERNAL VARIABLES
+ * ============================================================================ */
 
-// Load items from file
-void init_game_database() {
-    FILE *file = fopen(ITEMS_FILE, "r");
-    if (!file) {
-        printf("⚠️  Warning: Could not open %s, using default items\n", ITEMS_FILE);
-        
-        // Fallback to default items
-        strcpy(game_database[0].name, "iPhone 15 Pro");
-        game_database[0].value = 1199;
-        strcpy(game_database[0].image_url, "https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400");
-        
-        strcpy(game_database[1].name, "MacBook Pro");
-        game_database[1].value = 2499;
-        strcpy(game_database[1].image_url, "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400");
-        
-        strcpy(game_database[2].name, "PlayStation 5");
-        game_database[2].value = 499;
-        strcpy(game_database[2].image_url, "https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400");
-        
-        strcpy(game_database[3].name, "Nike Air Jordan");
-        game_database[3].value = 170;
-        strcpy(game_database[3].image_url, "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400");
-        
-        strcpy(game_database[4].name, "Tesla Model 3");
-        game_database[4].value = 42990;
-        strcpy(game_database[4].image_url, "https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=400");
-        
-        item_count = 5;
-        printf("📦 Game database initialized with %d default items\n", item_count);
-        return;
-    }
-    
-    char line[512];
-    item_count = 0;
-    
-    while (fgets(line, sizeof(line), file) && item_count < MAX_ITEMS) {
-        // Skip empty lines and comments
-        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r') {
-            continue;
-        }
-        
-        // Remove newline
-        line[strcspn(line, "\n\r")] = 0;
-        
-        // Parse: name|value|image_url
-        char *name = strtok(line, "|");
-        char *value_str = strtok(NULL, "|");
-        char *image_url = strtok(NULL, "|");
-        
-        if (name && value_str && image_url) {
-            strncpy(game_database[item_count].name, name, ITEM_NAME_LEN - 1);
-            game_database[item_count].name[ITEM_NAME_LEN - 1] = '\0';
-            
-            game_database[item_count].value = atoi(value_str);
-            
-            strncpy(game_database[item_count].image_url, image_url, IMAGE_URL_LEN - 1);
-            game_database[item_count].image_url[IMAGE_URL_LEN - 1] = '\0';
-            
-            item_count++;
-        }
-    }
-    
-    fclose(file);
-    
-    if (item_count < 2) {
-        printf("⚠️  Warning: Not enough items loaded, adding defaults\n");
-        strcpy(game_database[0].name, "Item A");
-        game_database[0].value = 100;
-        strcpy(game_database[0].image_url, "https://via.placeholder.com/400");
-        
-        strcpy(game_database[1].name, "Item B");
-        game_database[1].value = 200;
-        strcpy(game_database[1].image_url, "https://via.placeholder.com/400");
-        
-        item_count = 2;
-    }
-    
-    printf("📦 Game database loaded %d items from %s\n", item_count, ITEMS_FILE);
-    for (int i = 0; i < item_count && i < 5; i++) {
-        printf("   • %s: $%d\n", game_database[i].name, game_database[i].value);
-    }
-    if (item_count > 5) {
-        printf("   ... and %d more items\n", item_count - 5);
-    }
-}
+// Từ database.c
+extern GameItem game_database[MAX_ITEMS];
+extern int item_count;
 
-// Get random index except a specific one
-int get_random_index_except(int except) {
-    if (item_count <= 1) return 0;
-    int index;
-    do {
-        index = rand() % item_count;
-    } while (index == except);
-    return index;
-}
+/* ============================================================================
+ *                           SINGLE PLAYER HANDLERS
+ * ============================================================================ */
 
-// Handle game initialization
+/**
+ * Khởi tạo game mới cho single player
+ * 
+ * Route: POST /game
+ * Response: { action: "update_game", score, streak, labelA, valueA, ... }
+ */
 void handle_game_init(int sock, int session_id) {
     if (session_id == 0) {
         char error_json[] = "{\"error\":\"No session ID\"}";
@@ -167,23 +99,28 @@ void handle_game_init(int sock, int session_id) {
     
     pthread_mutex_unlock(&game_state_mutex);
     
-    // Send response to the requesting client
     send_json_response(sock, json);
     
-    printf("\n[GAME] 🎮 New game initialized (Session %d)\n", session_id);
+    printf("\n[GAME] 🎮 Single player game initialized (Session %d)\n", session_id);
     printf("       Item A: %s ($%d)\n", itemA->name, itemA->value);
     printf("       Item B: %s ($%d)\n", itemB->name, itemB->value);
     printf("==========================================\n");
 }
 
-// Handle player choice
+/**
+ * Xử lý lựa chọn của người chơi (single player)
+ * 
+ * Route: POST /game/choice
+ * Body: { choice: 1|2 }  // 1 = A cao hơn, 2 = B cao hơn
+ */
 void handle_player_choice(int sock, int session_id, char *json_body) {
     if (session_id == 0) {
         char error_json[] = "{\"error\":\"No session ID\"}";
         send_json_response(sock, error_json);
         return;
     }
-    // Manual JSON parsing - extract "choice" field
+    
+    // Parse choice from JSON
     char *choice_ptr = strstr(json_body, "\"choice\"");
     if (!choice_ptr) {
         char error_json[] = "{\"error\":\"Invalid request\"}";
@@ -191,7 +128,6 @@ void handle_player_choice(int sock, int session_id, char *json_body) {
         return;
     }
     
-    // Find the value after "choice":
     char *value_start = strchr(choice_ptr, ':');
     if (!value_start) {
         char error_json[] = "{\"error\":\"Invalid request\"}";
@@ -199,10 +135,8 @@ void handle_player_choice(int sock, int session_id, char *json_body) {
         return;
     }
     
-    // Skip whitespace and parse number
     value_start++;
     while (*value_start == ' ' || *value_start == '\t') value_start++;
-    
     int choice = atoi(value_start);
     
     pthread_mutex_lock(&game_state_mutex);
@@ -232,10 +166,8 @@ void handle_player_choice(int sock, int session_id, char *json_body) {
     
     // Check if choice is correct
     if (choice == 1) {
-        // User chose A has higher value
         correct = (itemA->value >= itemB->value);
     } else if (choice == 2) {
-        // User chose B has higher value
         correct = (itemB->value >= itemA->value);
     }
     
@@ -262,7 +194,7 @@ void handle_player_choice(int sock, int session_id, char *json_body) {
     itemA = &game_database[player->current_index_A];
     itemB = &game_database[player->current_index_B];
     
-    // Build JSON response with new state
+    // Build JSON response
     char json[BUFFER_SIZE];
     snprintf(json, sizeof(json),
         "{"
@@ -285,13 +217,12 @@ void handle_player_choice(int sock, int session_id, char *json_body) {
     
     pthread_mutex_unlock(&game_state_mutex);
     
-    // Send response to the requesting client
     send_json_response(sock, json);
     
-    printf("\n[GAME] 🎯 Player choice: %s (Session %d)\n", correct ? "✅ CORRECT" : "❌ WRONG", session_id);
+    printf("[GAME] 🎯 Single player choice: %s (Session %d)\n", 
+           correct ? "✅ CORRECT" : "❌ WRONG", session_id);
     printf("       Score: %d | Streak: %d\n", player->score, player->streak);
-    printf("       Next: %s vs %s\n", itemA->name, itemB->name);
     
-    // Broadcast the new state to the player's SSE connection
+    // Broadcast update via SSE
     broadcast_sse_to_session(session_id, json);
 }

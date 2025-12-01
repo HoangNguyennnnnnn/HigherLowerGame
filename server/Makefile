@@ -1,6 +1,19 @@
 # ============================================================================
 #                    HIGHER LOWER GAME - SERVER BUILD
 # ============================================================================
+# 
+# Cấu trúc modules:
+#   main.c          - Server entry point, globals, TCP loop
+#   router.c        - HTTP request routing
+#   sse.c           - Server-Sent Events handling
+#   http.c          - HTTP response utilities
+#   database.c      - Game database loading
+#   room_init.c     - Room system globals + initialization
+#   room_helpers.c  - Helper functions & JSON builders
+#   room_handlers.c - Room CRUD handlers
+#   game_handlers.c - Game flow handlers
+#
+# ============================================================================
 
 # Compiler and flags
 CC = gcc
@@ -16,11 +29,16 @@ BIN_DIR = bin
 # Target executable
 TARGET = $(BIN_DIR)/game_server
 
-# Source files
+# Source files - NEW modular structure
 SOURCES = $(SRC_DIR)/main.c \
-          $(SRC_DIR)/http_utils.c \
-          $(SRC_DIR)/game_logic.c \
-          $(SRC_DIR)/room_logic.c
+          $(SRC_DIR)/router.c \
+          $(SRC_DIR)/sse.c \
+          $(SRC_DIR)/http.c \
+          $(SRC_DIR)/database.c \
+          $(SRC_DIR)/room_init.c \
+          $(SRC_DIR)/room_helpers.c \
+          $(SRC_DIR)/room_handlers.c \
+          $(SRC_DIR)/game_handlers.c
 
 # Header files
 HEADERS = $(INC_DIR)/game.h \
@@ -30,13 +48,19 @@ HEADERS = $(INC_DIR)/game.h \
           $(INC_DIR)/sse.h \
           $(INC_DIR)/http.h \
           $(INC_DIR)/room.h \
-          $(INC_DIR)/game_logic.h
+          $(INC_DIR)/database.h \
+          $(INC_DIR)/room_helpers.h
 
-# Object files
+# Object files - matching new source files
 OBJECTS = $(OBJ_DIR)/main.o \
-          $(OBJ_DIR)/http_utils.o \
-          $(OBJ_DIR)/game_logic.o \
-          $(OBJ_DIR)/room_logic.o
+          $(OBJ_DIR)/router.o \
+          $(OBJ_DIR)/sse.o \
+          $(OBJ_DIR)/http.o \
+          $(OBJ_DIR)/database.o \
+          $(OBJ_DIR)/room_init.o \
+          $(OBJ_DIR)/room_helpers.o \
+          $(OBJ_DIR)/room_handlers.o \
+          $(OBJ_DIR)/game_handlers.o
 
 # Default target
 all: $(TARGET)

@@ -44,7 +44,7 @@ export const useRoom = (sessionId) => {
   }, [])
 
   // Create room
-  const createRoom = useCallback(async ({ roomName, playerName, maxPlayers, maxRounds }) => {
+  const createRoom = useCallback(async ({ roomName, playerName, maxRounds }) => {
     if (!sessionId) {
       setError('Chưa kết nối đến server')
       return null
@@ -52,7 +52,7 @@ export const useRoom = (sessionId) => {
 
     setLoading(true)
     try {
-      const data = await roomService.createRoom({ roomName, playerName, maxPlayers, maxRounds })
+      const data = await roomService.createRoom({ roomName, playerName, maxRounds })
       setState(prev => ({
         ...prev,
         currentRoom: data.room,

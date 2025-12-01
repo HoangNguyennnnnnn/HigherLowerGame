@@ -2,8 +2,8 @@
  * Application Configuration
  */
 
-// Server URL - Change this based on environment
-export const SERVER_URL = 'http://172.20.127.157:8080'
+// Server URL - Read from environment variable, fallback to localhost
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080'
 
 // API Endpoints
 export const ENDPOINTS = {

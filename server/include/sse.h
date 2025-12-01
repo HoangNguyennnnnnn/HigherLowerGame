@@ -23,6 +23,9 @@ extern SSE_Client sse_clients[MAX_CLIENTS];
 // Mutex để bảo vệ danh sách SSE clients
 extern pthread_mutex_t clients_mutex;
 
+// ID phiên tiếp theo
+extern int next_session_id;
+
 /* ============================================================================
  *                           SSE CONNECTION FUNCTIONS
  * ============================================================================ */

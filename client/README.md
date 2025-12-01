@@ -109,7 +109,9 @@ Axios instance với:
 
 ### `config.js`
 ```js
-SERVER_URL = 'http://172.20.127.157:8080'
+// Đọc từ .env hoặc dùng default
+SERVER_URL = import.meta.env.VITE_SERVER_URL || 'http://localhost:8080'
+
 ENDPOINTS = {
   SUBSCRIBE: '/subscribe',
   ROOMS: '/rooms',
@@ -162,11 +164,19 @@ npm run preview
 
 ## 🌐 Environment
 
-Để thay đổi server URL, sửa file `src/constants/config.js`:
+Tạo file `.env` trong thư mục client:
 
-```js
-export const SERVER_URL = 'http://your-server:8080'
+```bash
+# Copy từ template
+cp .env.example .env
 ```
+
+Nội dung `.env`:
+```env
+VITE_SERVER_URL=http://localhost:8080
+```
+
+Hoặc để trống sẽ dùng default `http://localhost:8080`.
 
 ## 📊 Game Flow
 

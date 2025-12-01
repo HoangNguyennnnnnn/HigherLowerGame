@@ -4,10 +4,10 @@
 
 import PropTypes from 'prop-types'
 
-function PlayerList({ players, currentSessionId, maxPlayers }) {
+function PlayerList({ players, currentSessionId }) {
   return (
     <div className="players-list">
-      <h2>👥 Người Chơi ({players?.length || 0}/{maxPlayers})</h2>
+      <h2>👥 Người Chơi ({players?.length || 0})</h2>
       <div className="players-grid">
         {players?.map((player) => (
           <div 
@@ -34,13 +34,11 @@ PlayerList.propTypes = {
     name: PropTypes.string.isRequired,
     is_host: PropTypes.bool
   })),
-  currentSessionId: PropTypes.number,
-  maxPlayers: PropTypes.number
+  currentSessionId: PropTypes.number
 }
 
 PlayerList.defaultProps = {
-  players: [],
-  maxPlayers: 4
+  players: []
 }
 
 export default PlayerList
