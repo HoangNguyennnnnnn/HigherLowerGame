@@ -1,64 +1,39 @@
+/*
+ * ============================================================================
+ *                    HIGHER LOWER GAME - MAIN INCLUDE
+ * ============================================================================
+ * File: game.h
+ * Description: Master header file - includes all other headers
+ *              Giữ backward compatibility với code cũ
+ * ============================================================================
+ */
+
 #ifndef GAME_H
 #define GAME_H
 
-#include <pthread.h>
+/* ============================================================================
+ *                           MODULE HEADERS
+ * ============================================================================ */
 
-// Constants
-#define MAX_CLIENTS 100
-#define BUFFER_SIZE 8192
-#define PORT 8080
-#define MAX_ITEMS 5
+// Cấu hình và constants
+#include "config.h"
 
-// SSE Client structure with session
-typedef struct {
-    int socket;
-    int active;
-    int session_id;
-} SSE_Client;
+// Data types và structures
+#include "types.h"
 
-// Game Item structure
-typedef struct {
-    char name[64];
-    int value;
-    char image_url[256];
-} GameItem;
+// HTTP utilities
+#include "http.h"
 
-// Player game state
-typedef struct {
-    int active;
-    int session_id;
-    int score;
-    int streak;
-    int current_index_A;
-    int current_index_B;
-} PlayerGameState;
+// SSE (Server-Sent Events)
+#include "sse.h"
 
-// Global variables for SSE clients
-extern SSE_Client sse_clients[MAX_CLIENTS];
-extern pthread_mutex_t clients_mutex;
+// Server core
+#include "server.h"
 
-// Global variables for player game states
-extern PlayerGameState player_states[MAX_CLIENTS];
-extern pthread_mutex_t game_state_mutex;
-extern int next_session_id;
+// Room/Lobby system
+#include "room.h"
 
-// Mock database
-extern GameItem game_database[MAX_ITEMS];
-
-// Function prototypes - HTTP utilities
-void send_cors_headers(int sock);
-void send_json_response(int sock, char *body);
-void broadcast_sse_to_session(int session_id, char *json_data);
-
-// Function prototypes - Game logic
-void init_game_database();
-void handle_game_init(int sock, int session_id);
-void handle_player_choice(int sock, int session_id, char *json_body);
-int get_random_index_except(int except);
-int get_session_from_request(char *request);
-
-// Function prototypes - Main server
-void *handle_client(void *arg);
-void handle_sse_subscribe(int client_sock);
+// Legacy single player game
+#include "game_logic.h"
 
 #endif // GAME_H

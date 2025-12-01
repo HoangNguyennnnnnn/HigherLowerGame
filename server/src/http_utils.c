@@ -69,3 +69,38 @@ void broadcast_sse_to_session(int session_id, char *json_data) {
     
     pthread_mutex_unlock(&clients_mutex);
 }
+
+// Broadcast SSE message to all players in a room
+void broadcast_sse_to_room(int room_id, char *json_data) {
+    if (room_id <= 0) return;
+    
+    char sse_message[BUFFER_SIZE];
+    snprintf(sse_message, sizeof(sse_message), "data: %s\n\n", json_data);
+    
+    pthread_mutex_lock(&clients_mutex);
+    
+    int sent_count = 0;
+    
+    for (int i = 0; i < MAX_CLIENTS; i++) {
+        if (sse_clients[i].active && sse_clients[i].room_id == room_id) {
+            int bytes_sent = write(sse_clients[i].socket, sse_message, strlen(sse_message));
+            
+            if (bytes_sent <= 0) {
+                printf("[SSE] ❌ Client disconnected: socket %d (session %d, room %d)\n", 
+                       sse_clients[i].socket, sse_clients[i].session_id, room_id);
+                close(sse_clients[i].socket);
+                sse_clients[i].active = 0;
+            } else {
+                sent_count++;
+            }
+        }
+    }
+    
+    pthread_mutex_unlock(&clients_mutex);
+    
+    if (sent_count > 0) {
+        printf("[SSE] 📡 Room broadcast to %d clients (room %d)\n", sent_count, room_id);
+    } else {
+        printf("[SSE] ⚠️  No active clients in room %d\n", room_id);
+    }
+}

@@ -1,0 +1,24 @@
+# Higher Lower Game - Items Database
+# Format: name|value|image_url
+# Lines starting with # are comments
+
+iPhone 15 Pro Max|1199|https://images.unsplash.com/photo-1695048133142-1a20484d2569?w=400
+MacBook Pro M3|2499|https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400
+Tesla Model 3|42990|https://images.unsplash.com/photo-1560958089-b8a1929cea89?w=400
+PlayStation 5|499|https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400
+Nike Air Jordan 1|170|https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400
+Rolex Submariner|8100|https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400
+Bitcoin (1 BTC)|45000|https://images.unsplash.com/photo-1518546305927-5a555bb7020d?w=400
+Louis Vuitton Bag|2500|https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=400
+Sony PlayStation VR2|549|https://images.unsplash.com/photo-1622979135225-d2ba269cf1ac?w=400
+Nintendo Switch OLED|349|https://images.unsplash.com/photo-1578303512597-81e6cc155b3e?w=400
+Samsung Galaxy S24 Ultra|1299|https://images.unsplash.com/photo-1610945415295-d9bbf067e59c?w=400
+Apple Watch Ultra 2|799|https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400
+Dyson Airwrap|599|https://images.unsplash.com/photo-1522338140262-f46f5913618a?w=400
+Canon EOS R5|3899|https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=400
+Bose QuietComfort Ultra|429|https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=400
+Herman Miller Aeron Chair|1395|https://images.unsplash.com/photo-1580480055273-228ff5388ef8?w=400
+Gucci Sneakers|890|https://images.unsplash.com/photo-1543508282-6319a3e2621f?w=400
+iPad Pro 12.9|1099|https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400
+AirPods Pro 2|249|https://images.unsplash.com/photo-1600294037681-c80b4cb5b434?w=400
+Chanel No. 5 Perfume|150|https://images.unsplash.com/photo-1541643600914-78b084683601?w=400

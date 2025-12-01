@@ -1,3 +1,9 @@
+html, body {
+    height: 100%; /* Bắt buộc thẻ body và html phải chiếm 100% chiều cao */
+    margin: 0;
+    padding: 0;
+}
+
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
@@ -13,6 +19,12 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+
 a {
   font-weight: 500;
   color: #646cff;
@@ -27,7 +39,6 @@ body {
   display: flex;
   place-items: center;
   min-width: 320px;
-  min-height: 100vh;
 }
 
 h1 {
