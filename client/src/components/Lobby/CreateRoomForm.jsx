@@ -7,8 +7,6 @@ import PropTypes from 'prop-types'
 function CreateRoomForm({ 
   roomName, 
   setRoomName, 
-  maxPlayers, 
-  setMaxPlayers,
   maxRounds,
   setMaxRounds,
   onCreate, 
@@ -25,16 +23,6 @@ function CreateRoomForm({
           value={roomName}
           onChange={(e) => setRoomName(e.target.value)}
         />
-        <select 
-          value={maxPlayers} 
-          onChange={(e) => setMaxPlayers(Number(e.target.value))}
-        >
-          <option value={2}>2 người chơi</option>
-          <option value={3}>3 người chơi</option>
-          <option value={4}>4 người chơi</option>
-          <option value={5}>5 người chơi</option>
-          <option value={6}>6 người chơi</option>
-        </select>
         <select 
           value={maxRounds} 
           onChange={(e) => setMaxRounds(Number(e.target.value))}
@@ -55,8 +43,6 @@ function CreateRoomForm({
 CreateRoomForm.propTypes = {
   roomName: PropTypes.string.isRequired,
   setRoomName: PropTypes.func.isRequired,
-  maxPlayers: PropTypes.number.isRequired,
-  setMaxPlayers: PropTypes.func.isRequired,
   maxRounds: PropTypes.number.isRequired,
   setMaxRounds: PropTypes.func.isRequired,
   onCreate: PropTypes.func.isRequired,

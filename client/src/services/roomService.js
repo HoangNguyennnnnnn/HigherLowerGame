@@ -19,15 +19,13 @@ export const getRooms = async () => {
  * @param {Object} params
  * @param {string} params.roomName - Room name
  * @param {string} params.playerName - Player name
- * @param {number} params.maxPlayers - Max players (2-10)
  * @param {number} params.maxRounds - Max rounds (5-50)
  * @returns {Promise<Object>} Created room data
  */
-export const createRoom = async ({ roomName, playerName, maxPlayers, maxRounds }) => {
+export const createRoom = async ({ roomName, playerName, maxRounds }) => {
   const response = await api.post(ENDPOINTS.ROOMS_CREATE, {
     room_name: roomName,
     player_name: playerName,
-    max_players: maxPlayers,
     max_rounds: maxRounds || 10
   })
   return response.data

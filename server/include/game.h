@@ -21,6 +21,9 @@
 // Data types và structures
 #include "types.h"
 
+// Database
+#include "database.h"
+
 // HTTP utilities
 #include "http.h"
 
@@ -32,8 +35,5 @@
 
 // Room/Lobby system
 #include "room.h"
-
-// Legacy single player game
-#include "game_logic.h"
 
 #endif // GAME_H

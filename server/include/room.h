@@ -51,7 +51,7 @@ void handle_list_rooms(int sock);
 /**
  * POST /rooms/create - Tạo phòng mới
  * 
- * Request body: { "room_name": "...", "player_name": "...", "max_players": N }
+ * Request body: { "room_name": "...", "player_name": "...", "max_rounds": N }
  * Response: { "action": "room_created", "room": {...} }
  */
 void handle_create_room(int sock, int session_id, char *json_body);

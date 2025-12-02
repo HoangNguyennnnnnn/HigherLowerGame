@@ -34,7 +34,6 @@ function WaitingRoom({
       <PlayerList
         players={room?.players}
         currentSessionId={sessionId}
-        maxPlayers={room?.max_players}
       />
 
       <div className="waiting-room-actions">
@@ -75,7 +74,6 @@ WaitingRoom.propTypes = {
     name: PropTypes.string,
     status: PropTypes.string,
     player_count: PropTypes.number,
-    max_players: PropTypes.number,
     max_rounds: PropTypes.number,
     host_session_id: PropTypes.number,
     players: PropTypes.array
